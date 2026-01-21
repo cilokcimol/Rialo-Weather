@@ -1,244 +1,284 @@
 :root {
-    --primary-color: #1a1a2e;
-    --secondary-color: #16213e;
-    --accent-color: #0f3460;
-    --highlight-color: #e94560;
-    --text-color: #ffffff;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --border-radius: 12px;
+    --rialo-black: #0a0a0a;
+    --rialo-dark-grey: #1c1c1c;
+    --rialo-beige: #f2f0e6;
+    --rialo-teal: #a0e8d9;
+    --glass-bg: rgba(10, 10, 10, 0.85);
+    --glass-border: rgba(160, 232, 217, 0.2);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
-    background-color: var(--primary-color);
-    color: var(--text-color);
+    background-color: var(--rialo-black);
+    color: var(--rialo-beige);
     height: 100vh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 
-/* Header */
-.rialo-header {
-    background-color: var(--secondary-color);
-    padding: 1rem 2rem;
+.rialo-nav {
+    height: 60px;
+    background-color: var(--rialo-black);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    padding: 0 20px;
+    border-bottom: 1px solid var(--rialo-dark-grey);
     z-index: 100;
 }
 
-.logo-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.brand-logo {
-    height: 50px;
-    border-radius: 8px;
+.nav-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
 }
 
 .nav-link {
-    color: var(--text-color);
+    color: var(--rialo-teal);
     text-decoration: none;
-    font-weight: 600;
-    padding: 8px 16px;
-    border: 1px solid var(--highlight-color);
-    border-radius: 20px;
-    transition: all 0.3s ease;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s;
 }
 
 .nav-link:hover {
-    background-color: var(--highlight-color);
+    color: var(--rialo-beige);
 }
 
-/* Layout */
-.dashboard {
-    display: flex;
+.app-container {
+    position: relative;
     flex: 1;
+    width: 100%;
     overflow: hidden;
 }
 
-/* Sidebar */
-.sidebar {
+.map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.weather-dashboard {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     width: 350px;
-    background-color: var(--secondary-color);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
     padding: 20px;
-    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    border-right: 1px solid rgba(255,255,255,0.1);
+    gap: 15px;
+    max-height: calc(100% - 100px);
+    overflow-y: auto;
 }
 
-.search-box, .weather-panel, .crypto-widget {
-    background: var(--glass-bg);
-    padding: 20px;
-    border-radius: var(--border-radius);
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.input-group {
+.search-box {
     display: flex;
-    margin-top: 15px;
-    gap: 5px;
+    gap: 8px;
 }
 
-input {
+#location-input {
     flex: 1;
+    background: var(--rialo-dark-grey);
+    border: 1px solid var(--rialo-teal);
+    color: var(--rialo-beige);
     padding: 10px;
     border-radius: 6px;
-    border: none;
-    background: rgba(0,0,0,0.2);
-    color: white;
+    outline: none;
 }
 
 button {
-    padding: 10px 15px;
+    background: var(--rialo-teal);
+    color: var(--rialo-black);
     border: none;
+    padding: 10px;
     border-radius: 6px;
-    background: var(--highlight-color);
-    color: white;
     cursor: pointer;
-    transition: 0.2s;
+    font-weight: bold;
+    transition: background 0.3s;
 }
 
 button:hover {
-    opacity: 0.9;
+    background: var(--rialo-beige);
 }
 
-.location-btn {
-    width: 100%;
-    margin-top: 10px;
-    background: var(--accent-color);
+.weather-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* Weather Display */
-.hidden {
+.weather-info.hidden {
     display: none;
 }
 
-.weather-header h2 {
-    font-size: 1.8rem;
-    margin-bottom: 5px;
+.current-header h2 {
+    font-size: 24px;
+    color: var(--rialo-teal);
 }
 
-.weather-main {
+.current-header span {
+    font-size: 14px;
+    color: #888;
+}
+
+.main-temp {
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    margin: 20px 0;
+    gap: 10px;
 }
 
-.temp-box {
-    font-size: 3.5rem;
+.main-temp img {
+    width: 64px;
+    height: 64px;
+}
+
+.main-temp span {
+    font-size: 48px;
     font-weight: bold;
 }
 
-.weather-details {
+.details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 8px;
+    margin-top: 10px;
 }
 
-.detail-item {
-    background: rgba(0,0,0,0.2);
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 0.9rem;
+.detail-card {
+    background: rgba(255,255,255,0.05);
+    padding: 8px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
 }
 
-.detail-item i {
-    color: var(--highlight-color);
-    margin-right: 5px;
+.detail-card span {
+    font-size: 10px;
+    color: var(--rialo-teal);
+    text-transform: uppercase;
 }
 
-/* Crypto Widget */
-.crypto-data {
-    margin-top: 15px;
-    text-align: center;
+.detail-card strong {
+    font-size: 14px;
+}
+
+.layer-controls {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+}
+
+.layer-btn {
+    background: transparent;
+    border: 1px solid var(--rialo-teal);
+    color: var(--rialo-teal);
+    font-size: 12px;
+}
+
+.layer-btn.active, .layer-btn:hover {
+    background: var(--rialo-teal);
+    color: var(--rialo-black);
+}
+
+.crypto-widget {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 15px;
+    z-index: 10;
 }
 
 .crypto-header {
     display: flex;
     justify-content: space-between;
-    font-weight: bold;
+    align-items: center;
     margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--rialo-teal);
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
-.crypto-price {
-    font-size: 1.5rem;
-    color: #00ff88;
-}
-
-/* Map Section */
-.map-section {
-    flex: 1;
-    position: relative;
-}
-
-#map {
-    width: 100%;
-    height: 100%;
-}
-
-.map-controls {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 10;
+.crypto-search {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 5px;
 }
 
-.layer-btn {
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255,255,255,0.2);
-    font-size: 0.9rem;
+#crypto-input {
+    width: 80px;
+    background: var(--rialo-dark-grey);
+    border: none;
+    color: white;
+    padding: 4px;
+    border-radius: 3px;
+    font-size: 10px;
 }
 
-.layer-btn.active {
-    background: var(--highlight-color);
-    border-color: var(--highlight-color);
+#crypto-search-btn {
+    padding: 4px 8px;
+    font-size: 10px;
 }
 
-/* Footer */
-.rialo-footer {
-    background-color: var(--secondary-color);
-    padding: 10px 2rem;
-    text-align: center;
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.6);
+.crypto-row {
     display: flex;
     justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 0;
 }
 
-.rialo-footer a {
-    color: var(--highlight-color);
-    text-decoration: none;
+.c-change.pos { color: #00ff00; }
+.c-change.neg { color: #ff0000; }
+
+.rialo-footer {
+    height: 30px;
+    background: var(--rialo-black);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 10px;
+    color: #666;
+    z-index: 100;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-    .dashboard {
-        flex-direction: column;
-    }
-    .sidebar {
+    .weather-dashboard {
+        top: auto;
+        bottom: 0;
+        left: 0;
         width: 100%;
-        max-height: 40vh;
+        max-height: 50vh;
+        border-radius: 12px 12px 0 0;
     }
-    .map-section {
-        height: 60vh;
+    .crypto-widget {
+        top: 10px;
+        right: 10px;
+        bottom: auto;
+        width: calc(100% - 20px);
+    }
+    .layer-controls {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
