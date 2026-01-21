@@ -1,185 +1,221 @@
-const weatherApiKey = "dea260a04f844eb9922214011262001";
-const maptilerKey = "M3G7SJimZ3HyNUB07YAa";
-const cmcApiKey = "5a53361fcadf48b492830ef88ccbd710";
+const WEATHER_API_KEY = 'dea260a04f844eb9922214011262001';
+const MAPTILER_KEY = 'M3G7SJimZ3HyNUB07YAa';
 
-maptilersdk.config.apiKey = maptilerKey;
+maptilersdk.config.apiKey = MAPTILER_KEY;
 
-const map = new maptilersdk.Map({
-    container: 'map',
-    style: maptilersdk.MapStyle.BACKDROP,
-    center: [0, 20],
-    zoom: 2,
-    hash: true,
+let map;
+let weatherLayer;
+let currentLayerType = 'precipitation';
+
+document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    getWeather('Jakarta'); 
+    setupEventListeners();
 });
 
-let activeWeatherLayer = null;
-const weatherLayers = {};
+function initMap() {
+    map = new maptilersdk.Map({
+        container: 'map',
+        style: maptilersdk.MapStyle.BACKDROP.DARK,
+        center: [106.8456, -6.2088],
+        zoom: 3
+    });
 
-const initLayers = () => {
-    weatherLayers.precipitation = new maptilerweather.PrecipitationLayer({ opacity: 0.8 });
-    weatherLayers.pressure = new maptilerweather.PressureLayer({ opacity: 0.8 });
-    weatherLayers.radar = new maptilerweather.RadarLayer({ opacity: 0.8 });
-    weatherLayers.temperature = new maptilerweather.TemperatureLayer({ opacity: 0.8 });
-    weatherLayers.wind = new maptilerweather.WindLayer({ opacity: 0.8 });
-};
-
-initLayers();
-
-map.on('load', () => {
-    map.setPaintProperty("Water", 'fill-color', "rgba(0, 0, 0, 0.4)");
-    setActiveLayer('wind');
-    
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude } = pos.coords;
-                map.flyTo({ center: [longitude, latitude], zoom: 10 });
-                fetchWeather(`${latitude},${longitude}`);
-            }
-        );
-    }
-    fetchCryptoData("BTC");
-});
-
-function setActiveLayer(layerName) {
-    if (activeWeatherLayer) {
-        map.removeLayer(activeWeatherLayer.id);
-        activeWeatherLayer = null;
-    }
-    
-    const layer = weatherLayers[layerName];
-    if (layer) {
-        map.addLayer(layer);
-        activeWeatherLayer = layer;
-        if(layer.animateByFactor) {
-            layer.animateByFactor(3600);
-        }
-    }
-
-    document.querySelectorAll('.layer-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if(btn.dataset.layer === layerName) btn.classList.add('active');
+    map.on('load', () => {
+        setWeatherLayer('precipitation');
     });
 }
 
-document.querySelectorAll('.layer-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        setActiveLayer(e.target.dataset.layer);
-    });
-});
+function setWeatherLayer(type) {
+    if (weatherLayer) {
+        map.removeLayer(weatherLayer);
+    }
 
-async function fetchWeather(query) {
-    try {
-        const res = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${weatherApiKey}&q=${query}&days=1&aqi=no&alerts=no`);
-        if (!res.ok) throw new Error("Weather not found");
-        const data = await res.json();
-        updateWeatherUI(data);
-        
-        if (data.location) {
-            map.flyTo({ 
-                center: [data.location.lon, data.location.lat], 
-                zoom: 10 
+    currentLayerType = type;
+    
+    switch(type) {
+        case 'precipitation':
+            weatherLayer = new maptilerweather.PrecipitationLayer();
+            break;
+        case 'temperature':
+            weatherLayer = new maptilerweather.TemperatureLayer({
+                colorramp: maptilerweather.ColorRamp.builtin.TEMPERATURE_3
             });
-        }
-    } catch (err) {
-        alert("Location not found. Please try again.");
+            break;
+        case 'wind':
+            weatherLayer = new maptilerweather.WindLayer();
+            break;
+        case 'pressure':
+            weatherLayer = new maptilerweather.PressureLayer();
+            break;
+        case 'radar':
+            weatherLayer = new maptilerweather.RadarLayer();
+            break;
+        case 'clouds':
+             // Using Radar as proxy for clouds visual if CloudLayer isn't explicitly separated in this version
+             // Or using a generic tile layer if needed, defaulting to Radar for "busy" visual
+             weatherLayer = new maptilerweather.RadarLayer({
+                 opacity: 0.8
+             });
+             break;
+        default:
+            weatherLayer = new maptilerweather.PrecipitationLayer();
+    }
+
+    map.addLayer(weatherLayer);
+    
+    // Animate the layer
+    if (type !== 'wind') { // Wind animates differently
+        weatherLayer.animateByFactor(3600);
     }
 }
 
-function updateWeatherUI(data) {
-    const current = data.current;
-    const loc = data.location;
-
-    document.getElementById('weather-info').classList.remove('hidden');
-    document.getElementById('city-name').innerText = loc.name;
-    document.getElementById('country-name').innerText = loc.country;
-    document.getElementById('temperature').innerText = `${current.temp_c}°c`;
-    document.getElementById('condition-text').innerText = current.condition.text;
-    document.getElementById('condition-icon').src = `https:${current.condition.icon}`;
-    
-    document.getElementById('wind-speed').innerText = `${current.wind_kph} kph`;
-    document.getElementById('humidity').innerText = `${current.humidity}%`;
-    document.getElementById('pressure').innerText = `${current.pressure_mb} mb`;
-    document.getElementById('uv-index').innerText = current.uv;
-    document.getElementById('visibility').innerText = `${current.vis_km} km`;
-    document.getElementById('feels-like').innerText = `${current.feelslike_c}°c`;
-}
-
-document.getElementById('search-btn').addEventListener('click', () => {
-    const query = document.getElementById('location-input').value;
-    if (query) fetchWeather(query);
-});
-
-document.getElementById('location-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+function setupEventListeners() {
+    document.getElementById('search-btn').addEventListener('click', () => {
         const query = document.getElementById('location-input').value;
-        if (query) fetchWeather(query);
-    }
-});
+        if(query) getWeather(query);
+    });
 
-document.getElementById('geo-btn').addEventListener('click', () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                fetchWeather(`${pos.coords.latitude},${pos.coords.longitude}`);
-            },
-            () => alert("Location access denied")
-        );
-    }
-});
+    document.getElementById('location-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const query = document.getElementById('location-input').value;
+            if(query) getWeather(query);
+        }
+    });
 
-async function fetchCryptoData(symbol) {
-    const container = document.getElementById('crypto-data');
-    container.innerHTML = '<div class="crypto-row">Loading...</div>';
-    
-    try {
-        const proxyUrl = "https://corsproxy.io/?";
-        const targetUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}&convert=USD`;
-        
-        const res = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
-            headers: {
-                'X-CMC_PRO_API_KEY': cmcApiKey
-            }
+    document.getElementById('geo-btn').addEventListener('click', () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const q = `${position.coords.latitude},${position.coords.longitude}`;
+                    getWeather(q);
+                },
+                (error) => {
+                    alert('Unable to retrieve your location');
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser');
+        }
+    });
+
+    const layerBtns = document.querySelectorAll('.layer-btn');
+    layerBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            layerBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            setWeatherLayer(e.target.dataset.layer);
         });
+    });
+}
 
-        const json = await res.json();
-        
-        if (json.status.error_code !== 0) throw new Error(json.status.error_message);
+async function getWeather(query) {
+    try {
+        const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${query}&days=7&aqi=yes&alerts=yes`);
+        const data = await response.json();
 
-        const data = json.data[symbol.toUpperCase()];
-        if(!data) throw new Error("Symbol not found"); // Handle array response in v2 if specific
-        
-        // Handle array or object return based on CMC versioning nuances
-        const coinData = Array.isArray(data) ? data[0] : data;
-        const quote = coinData.quote.USD;
+        if (data.error) {
+            alert(data.error.message);
+            return;
+        }
 
-        const changeClass = quote.percent_change_24h >= 0 ? 'pos' : 'neg';
-        const sign = quote.percent_change_24h >= 0 ? '+' : '';
+        updateUI(data);
+        updateMapLocation(data.location.lat, data.location.lon);
 
-        container.innerHTML = `
-            <div class="crypto-row">
-                <span class="c-name" style="font-weight:bold; color: #a0e8d9;">${coinData.name} (${coinData.symbol})</span>
-            </div>
-            <div class="crypto-row">
-                <span>Price</span>
-                <span class="c-price">$${quote.price.toFixed(2)}</span>
-            </div>
-            <div class="crypto-row">
-                <span>24h Change</span>
-                <span class="c-change ${changeClass}">${sign}${quote.percent_change_24h.toFixed(2)}%</span>
-            </div>
-            <div class="crypto-row">
-                <span>Market Cap</span>
-                <span>$${(quote.market_cap / 1000000000).toFixed(2)}B</span>
+    } catch (error) {
+        console.error('Error fetching weather data:', error);
+    }
+}
+
+function updateUI(data) {
+    const current = data.current;
+    const location = data.location;
+    const forecast = data.forecast.forecastday;
+
+    // Current Weather
+    const weatherHTML = `
+        <div class="location-tag">${location.name}, ${location.country}</div>
+        <img src="https:${current.condition.icon}" alt="${current.condition.text}" style="width: 100px; height: 100px;">
+        <div class="temp-display">${current.temp_c}°</div>
+        <div class="condition-text">${current.condition.text}</div>
+        <p style="color: var(--accent-color); margin-top: 10px;">${location.localtime}</p>
+    `;
+    document.getElementById('current-weather').innerHTML = weatherHTML;
+
+    // Details Grid
+    const detailsHTML = `
+        <div class="detail-item">
+            <div class="detail-label">Feels Like</div>
+            <div class="detail-value">${current.feelslike_c}°C</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Humidity</div>
+            <div class="detail-value">${current.humidity}%</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Wind</div>
+            <div class="detail-value">${current.wind_kph} km/h ${current.wind_dir}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">UV Index</div>
+            <div class="detail-value">${current.uv}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Pressure</div>
+            <div class="detail-value">${current.pressure_mb} mb</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Visibility</div>
+            <div class="detail-value">${current.vis_km} km</div>
+        </div>
+    `;
+    document.getElementById('weather-details').innerHTML = detailsHTML;
+
+    // Forecast
+    let forecastHTML = '';
+    forecast.forEach(day => {
+        const date = new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+        forecastHTML += `
+            <div class="forecast-card">
+                <p style="color: var(--text-secondary); margin-bottom: 10px;">${date}</p>
+                <img src="https:${day.day.condition.icon}" alt="icon" width="50">
+                <p style="font-weight: bold; font-size: 1.2rem; margin: 5px 0;">${Math.round(day.day.avgtemp_c)}°C</p>
+                <p style="font-size: 0.9rem;">${day.day.condition.text}</p>
+                <p style="font-size: 0.8rem; color: var(--accent-color); margin-top: 5px;">Rain: ${day.day.daily_chance_of_rain}%</p>
             </div>
         `;
+    });
+    document.getElementById('forecast-container').innerHTML = forecastHTML;
 
-    } catch (err) {
-        container.innerHTML = `<div class="crypto-row" style="color:red">Error: ${err.message || "Not found"}</div>`;
+    // Astro Data
+    const astro = forecast[0].astro;
+    const astroHTML = `
+        <h3 style="color: var(--cream-color); margin-bottom: 15px;">Sun & Moon</h3>
+        <div class="info-row"><span>Sunrise</span> <span>${astro.sunrise}</span></div>
+        <div class="info-row"><span>Sunset</span> <span>${astro.sunset}</span></div>
+        <div class="info-row"><span>Moonrise</span> <span>${astro.moonrise}</span></div>
+        <div class="info-row"><span>Phase</span> <span>${astro.moon_phase}</span></div>
+    `;
+    document.getElementById('astro-data').innerHTML = astroHTML;
+
+    // AQI Data
+    const aqi = current.air_quality;
+    if(aqi) {
+        const aqiHTML = `
+            <h3 style="color: var(--cream-color); margin-bottom: 15px;">Air Quality</h3>
+            <div class="info-row"><span>CO</span> <span>${aqi.co.toFixed(1)}</span></div>
+            <div class="info-row"><span>NO2</span> <span>${aqi.no2.toFixed(1)}</span></div>
+            <div class="info-row"><span>O3</span> <span>${aqi.o3.toFixed(1)}</span></div>
+            <div class="info-row"><span>PM2.5</span> <span>${aqi.pm2_5.toFixed(1)}</span></div>
+            <div class="info-row"><span>EPA Index</span> <span style="color: var(--accent-color); font-weight:bold;">${aqi['us-epa-index']}</span></div>
+        `;
+        document.getElementById('aqi-data').innerHTML = aqiHTML;
     }
 }
 
-document.getElementById('crypto-search-btn').addEventListener('click', () => {
-    const sym = document.getElementById('crypto-input').value;
-    if(sym) fetchCryptoData(sym);
-});
+function updateMapLocation(lat, lon) {
+    map.flyTo({
+        center: [lon, lat],
+        zoom: 10
+    });
+}
