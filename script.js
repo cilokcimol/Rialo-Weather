@@ -1,217 +1,185 @@
-// Configuration
-const CONFIG = {
-    WEATHER_API_KEY: 'dea260a04f844eb9922214011262001',
-    MAPTILER_KEY: 'M3G7SJimZ3HyNUB07YAa',
-    CMC_API_KEY: '5a53361fcadf48b492830ef88ccbd710',
-    // Note: CMC API usually requires a backend proxy for browser requests due to CORS.
-    // For this client-side script, we use a standard cors-to-proxy gateway for demonstration.
-    CMC_PROXY: 'https://cors-anywhere.herokuapp.com/' 
-};
+const weatherApiKey = "dea260a04f844eb9922214011262001";
+const maptilerKey = "M3G7SJimZ3HyNUB07YAa";
+const cmcApiKey = "5a53361fcadf48b492830ef88ccbd710";
 
-// State
-let map;
-let weatherLayer;
-let activeLayer = 'wind';
+maptilersdk.config.apiKey = maptilerKey;
 
-// DOM Elements
-const els = {
-    locationInput: document.getElementById('locationInput'),
-    searchBtn: document.getElementById('searchBtn'),
-    locateBtn: document.getElementById('locateBtn'),
-    weatherPanel: document.getElementById('weatherResult'),
-    city: document.getElementById('cityName'),
-    time: document.getElementById('localTime'),
-    icon: document.getElementById('weatherIcon'),
-    temp: document.getElementById('currentTemp'),
-    text: document.getElementById('conditionText'),
-    wind: document.getElementById('windSpeed'),
-    humidity: document.getElementById('humidity'),
-    visibility: document.getElementById('visibility'),
-    uv: document.getElementById('uvIndex'),
-    pressure: document.getElementById('pressure'),
-    layerBtns: document.querySelectorAll('.layer-btn'),
-    cryptoInput: document.getElementById('cryptoInput'),
-    cryptoSearchBtn: document.getElementById('cryptoSearchBtn'),
-    cryptoResult: document.getElementById('cryptoResult'),
-    cName: document.getElementById('cryptoName'),
-    cSymbol: document.getElementById('cryptoSymbol'),
-    cPrice: document.getElementById('cryptoPrice'),
-    cChange: document.getElementById('cryptoChange')
-};
-
-// Initialization
-document.addEventListener('DOMContentLoaded', () => {
-    initMap();
-    initEventListeners();
-    // Prompt for location on load
-    getLocationWeather();
+const map = new maptilersdk.Map({
+    container: 'map',
+    style: maptilersdk.MapStyle.BACKDROP,
+    center: [0, 20],
+    zoom: 2,
+    hash: true,
 });
 
-// MapTiler Initialization
-function initMap() {
-    maptilersdk.config.apiKey = CONFIG.MAPTILER_KEY;
-    
-    map = new maptilersdk.Map({
-        container: 'map',
-        style: maptilersdk.MapStyle.BACKDROP,
-        center: [0, 20],
-        zoom: 2,
-        hash: true
-    });
+let activeWeatherLayer = null;
+const weatherLayers = {};
 
-    map.on('load', () => {
-        setWeatherLayer('wind');
+const initLayers = () => {
+    weatherLayers.precipitation = new maptilerweather.PrecipitationLayer({ opacity: 0.8 });
+    weatherLayers.pressure = new maptilerweather.PressureLayer({ opacity: 0.8 });
+    weatherLayers.radar = new maptilerweather.RadarLayer({ opacity: 0.8 });
+    weatherLayers.temperature = new maptilerweather.TemperatureLayer({ opacity: 0.8 });
+    weatherLayers.wind = new maptilerweather.WindLayer({ opacity: 0.8 });
+};
+
+initLayers();
+
+map.on('load', () => {
+    map.setPaintProperty("Water", 'fill-color', "rgba(0, 0, 0, 0.4)");
+    setActiveLayer('wind');
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                map.flyTo({ center: [longitude, latitude], zoom: 10 });
+                fetchWeather(`${latitude},${longitude}`);
+            }
+        );
+    }
+    fetchCryptoData("BTC");
+});
+
+function setActiveLayer(layerName) {
+    if (activeWeatherLayer) {
+        map.removeLayer(activeWeatherLayer.id);
+        activeWeatherLayer = null;
+    }
+    
+    const layer = weatherLayers[layerName];
+    if (layer) {
+        map.addLayer(layer);
+        activeWeatherLayer = layer;
+        if(layer.animateByFactor) {
+            layer.animateByFactor(3600);
+        }
+    }
+
+    document.querySelectorAll('.layer-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.dataset.layer === layerName) btn.classList.add('active');
     });
 }
 
-function setWeatherLayer(type) {
-    if (weatherLayer) {
-        map.removeLayer(weatherLayer.id);
-    }
-
-    const layerMap = {
-        'wind': maptilerweather.WindLayer,
-        'precipitation': maptilerweather.PrecipitationLayer,
-        'temperature': maptilerweather.TemperatureLayer,
-        'pressure': maptilerweather.PressureLayer,
-        'radar': maptilerweather.RadarLayer
-    };
-
-    const LayerClass = layerMap[type];
-    if (!LayerClass) return;
-
-    weatherLayer = new LayerClass({
-        opacity: 0.8,
-        id: 'weather-layer'
+document.querySelectorAll('.layer-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        setActiveLayer(e.target.dataset.layer);
     });
+});
 
-    map.addLayer(weatherLayer);
-    
-    // Only animate wind or radar for visual effect
-    if(type === 'wind' || type === 'radar' || type === 'precipitation') {
-        weatherLayer.animateByFactor(3600);
-    }
-}
-
-// WeatherAPI Logic
 async function fetchWeather(query) {
-    const url = `https://api.weatherapi.com/v1/current.json?key=${CONFIG.WEATHER_API_KEY}&q=${query}&aqi=no`;
-    
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Location not found');
-        const data = await response.json();
+        const res = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${weatherApiKey}&q=${query}&days=1&aqi=no&alerts=no`);
+        if (!res.ok) throw new Error("Weather not found");
+        const data = await res.json();
         updateWeatherUI(data);
         
-        // Update Map Center
-        map.flyTo({
-            center: [data.location.lon, data.location.lat],
-            zoom: 10
-        });
-    } catch (error) {
-        alert(error.message);
+        if (data.location) {
+            map.flyTo({ 
+                center: [data.location.lon, data.location.lat], 
+                zoom: 10 
+            });
+        }
+    } catch (err) {
+        alert("Location not found. Please try again.");
     }
 }
 
 function updateWeatherUI(data) {
-    els.weatherPanel.classList.remove('hidden');
-    els.city.textContent = `${data.location.name}, ${data.location.country}`;
-    els.time.textContent = data.location.localtime;
-    els.icon.src = `https:${data.current.condition.icon}`;
-    els.temp.textContent = data.current.temp_c;
-    els.text.textContent = data.current.condition.text;
-    els.wind.textContent = data.current.wind_kph;
-    els.humidity.textContent = data.current.humidity;
-    els.visibility.textContent = data.current.vis_km;
-    els.uv.textContent = data.current.uv;
-    els.pressure.textContent = data.current.pressure_mb;
+    const current = data.current;
+    const loc = data.location;
+
+    document.getElementById('weather-info').classList.remove('hidden');
+    document.getElementById('city-name').innerText = loc.name;
+    document.getElementById('country-name').innerText = loc.country;
+    document.getElementById('temperature').innerText = `${current.temp_c}°c`;
+    document.getElementById('condition-text').innerText = current.condition.text;
+    document.getElementById('condition-icon').src = `https:${current.condition.icon}`;
+    
+    document.getElementById('wind-speed').innerText = `${current.wind_kph} kph`;
+    document.getElementById('humidity').innerText = `${current.humidity}%`;
+    document.getElementById('pressure').innerText = `${current.pressure_mb} mb`;
+    document.getElementById('uv-index').innerText = current.uv;
+    document.getElementById('visibility').innerText = `${current.vis_km} km`;
+    document.getElementById('feels-like').innerText = `${current.feelslike_c}°c`;
 }
 
-// Geolocation
-function getLocationWeather() {
+document.getElementById('search-btn').addEventListener('click', () => {
+    const query = document.getElementById('location-input').value;
+    if (query) fetchWeather(query);
+});
+
+document.getElementById('location-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        const query = document.getElementById('location-input').value;
+        if (query) fetchWeather(query);
+    }
+});
+
+document.getElementById('geo-btn').addEventListener('click', () => {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const query = `${position.coords.latitude},${position.coords.longitude}`;
-                fetchWeather(query);
+            (pos) => {
+                fetchWeather(`${pos.coords.latitude},${pos.coords.longitude}`);
             },
-            (error) => {
-                console.log("Geolocation denied or error.");
-            }
+            () => alert("Location access denied")
         );
     }
-}
+});
 
-// CoinMarketCap Logic
-async function fetchCrypto(symbol) {
-    // Note: For a static site, we utilize a CORS proxy. 
-    // In a production environment, this request should go to your own backend.
-    const url = `${CONFIG.CMC_PROXY}https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}&convert=USD`;
+async function fetchCryptoData(symbol) {
+    const container = document.getElementById('crypto-data');
+    container.innerHTML = '<div class="crypto-row">Loading...</div>';
     
     try {
-        const response = await fetch(url, {
+        const proxyUrl = "https://corsproxy.io/?";
+        const targetUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}&convert=USD`;
+        
+        const res = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
             headers: {
-                'X-CMC_PRO_API_KEY': CONFIG.CMC_API_KEY,
-                'Accept': 'application/json'
+                'X-CMC_PRO_API_KEY': cmcApiKey
             }
         });
+
+        const json = await res.json();
         
-        if (!response.ok) throw new Error('Token not found');
-        const json = await response.json();
+        if (json.status.error_code !== 0) throw new Error(json.status.error_message);
+
         const data = json.data[symbol.toUpperCase()];
+        if(!data) throw new Error("Symbol not found"); // Handle array response in v2 if specific
         
-        if(data) {
-            updateCryptoUI(data);
-        } else {
-            alert('Token data unavailable');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Error fetching crypto data. Note: Browser CORS may block CMC API without a backend.');
+        // Handle array or object return based on CMC versioning nuances
+        const coinData = Array.isArray(data) ? data[0] : data;
+        const quote = coinData.quote.USD;
+
+        const changeClass = quote.percent_change_24h >= 0 ? 'pos' : 'neg';
+        const sign = quote.percent_change_24h >= 0 ? '+' : '';
+
+        container.innerHTML = `
+            <div class="crypto-row">
+                <span class="c-name" style="font-weight:bold; color: #a0e8d9;">${coinData.name} (${coinData.symbol})</span>
+            </div>
+            <div class="crypto-row">
+                <span>Price</span>
+                <span class="c-price">$${quote.price.toFixed(2)}</span>
+            </div>
+            <div class="crypto-row">
+                <span>24h Change</span>
+                <span class="c-change ${changeClass}">${sign}${quote.percent_change_24h.toFixed(2)}%</span>
+            </div>
+            <div class="crypto-row">
+                <span>Market Cap</span>
+                <span>$${(quote.market_cap / 1000000000).toFixed(2)}B</span>
+            </div>
+        `;
+
+    } catch (err) {
+        container.innerHTML = `<div class="crypto-row" style="color:red">Error: ${err.message || "Not found"}</div>`;
     }
 }
 
-function updateCryptoUI(data) {
-    els.cryptoResult.classList.remove('hidden');
-    els.cName.textContent = data.name;
-    els.cSymbol.textContent = data.symbol;
-    els.cPrice.textContent = data.quote.USD.price.toFixed(2);
-    
-    const change = data.quote.USD.percent_change_24h;
-    els.cChange.textContent = `${change.toFixed(2)}%`;
-    els.cChange.style.color = change >= 0 ? '#00ff88' : '#ff4d4d';
-}
-
-// Event Listeners
-function initEventListeners() {
-    // Weather Search
-    els.searchBtn.addEventListener('click', () => {
-        const query = els.locationInput.value;
-        if (query) fetchWeather(query);
-    });
-
-    els.locationInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') els.searchBtn.click();
-    });
-
-    els.locateBtn.addEventListener('click', getLocationWeather);
-
-    // Crypto Search
-    els.cryptoSearchBtn.addEventListener('click', () => {
-        const query = els.cryptoInput.value.toUpperCase();
-        if (query) fetchCrypto(query);
-    });
-
-    // Map Layer Switching
-    els.layerBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // Remove active class
-            els.layerBtns.forEach(b => b.classList.remove('active'));
-            // Add active class
-            e.target.classList.add('active');
-            // Switch layer
-            const layer = e.target.dataset.layer;
-            setWeatherLayer(layer);
-        });
-    });
-}
+document.getElementById('crypto-search-btn').addEventListener('click', () => {
+    const sym = document.getElementById('crypto-input').value;
+    if(sym) fetchCryptoData(sym);
+});
