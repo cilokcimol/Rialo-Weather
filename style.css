@@ -1,284 +1,336 @@
 :root {
-    --rialo-black: #0a0a0a;
-    --rialo-dark-grey: #1c1c1c;
-    --rialo-beige: #f2f0e6;
-    --rialo-teal: #a0e8d9;
-    --glass-bg: rgba(10, 10, 10, 0.85);
-    --glass-border: rgba(160, 232, 217, 0.2);
+    --primary-bg: #121212;
+    --secondary-bg: #1e1e1e;
+    --accent-color: #a0e0d0; 
+    --cream-color: #f2f0e9; 
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --card-bg: rgba(30, 30, 30, 0.8);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    --font-main: 'Space Grotesk', sans-serif;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
-    background-color: var(--rialo-black);
-    color: var(--rialo-beige);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    font-family: var(--font-main);
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    overflow-x: hidden;
 }
 
-.rialo-nav {
-    height: 60px;
-    background-color: var(--rialo-black);
+header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--rialo-dark-grey);
-    z-index: 100;
+    padding: 15px 5%;
+    background-color: var(--secondary-bg);
+    border-bottom: var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
-.nav-logo {
+.header-logo {
     height: 40px;
     width: auto;
-    object-fit: contain;
 }
 
-.nav-link {
-    color: var(--rialo-teal);
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 14px;
+.header-title h1 {
+    font-size: 1.5rem;
+    color: var(--cream-color);
     letter-spacing: 1px;
-    transition: color 0.3s;
+    text-transform: uppercase;
 }
 
-.nav-link:hover {
-    color: var(--rialo-beige);
+.visit-btn {
+    background-color: var(--accent-color);
+    color: #000;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 700;
+    transition: all 0.3s ease;
 }
 
-.app-container {
-    position: relative;
-    flex: 1;
-    width: 100%;
-    overflow: hidden;
+.visit-btn:hover {
+    background-color: var(--cream-color);
+    transform: translateY(-2px);
 }
 
-.map-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+.search-section {
+    padding: 30px 5%;
+    background: linear-gradient(180deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
 }
 
-.weather-dashboard {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 350px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 20px;
-    z-index: 10;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+.search-container {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-height: calc(100% - 100px);
-    overflow-y: auto;
-}
-
-.search-box {
-    display: flex;
-    gap: 8px;
+    max-width: 800px;
+    margin: 0 auto;
+    gap: 10px;
 }
 
 #location-input {
-    flex: 1;
-    background: var(--rialo-dark-grey);
-    border: 1px solid var(--rialo-teal);
-    color: var(--rialo-beige);
-    padding: 10px;
-    border-radius: 6px;
-    outline: none;
-}
-
-button {
-    background: var(--rialo-teal);
-    color: var(--rialo-black);
+    flex-grow: 1;
+    padding: 15px 25px;
+    border-radius: 30px;
     border: none;
-    padding: 10px;
-    border-radius: 6px;
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 1rem;
+    font-family: var(--font-main);
+    outline: none;
+    border: 1px solid transparent;
+    transition: border 0.3s;
+}
+
+#location-input:focus {
+    border-color: var(--accent-color);
+}
+
+#search-btn, #geo-btn {
+    padding: 0 30px;
+    border-radius: 30px;
+    border: none;
     cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
+    font-family: var(--font-main);
+    font-weight: 600;
+    transition: 0.3s;
 }
 
-button:hover {
-    background: var(--rialo-beige);
+#search-btn {
+    background-color: var(--cream-color);
+    color: #000;
 }
 
-.weather-info {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+#search-btn:hover {
+    background-color: var(--accent-color);
 }
 
-.weather-info.hidden {
-    display: none;
-}
-
-.current-header h2 {
-    font-size: 24px;
-    color: var(--rialo-teal);
-}
-
-.current-header span {
-    font-size: 14px;
-    color: #888;
-}
-
-.main-temp {
+#geo-btn {
+    background-color: rgba(255,255,255,0.1);
+    color: var(--accent-color);
+    padding: 0 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
 }
 
-.main-temp img {
-    width: 64px;
-    height: 64px;
+#geo-btn:hover {
+    background-color: rgba(255,255,255,0.2);
 }
 
-.main-temp span {
-    font-size: 48px;
-    font-weight: bold;
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    padding: 0 5%;
+    height: 600px;
+    margin-bottom: 30px;
+}
+
+.weather-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.current-weather-card {
+    background: var(--card-bg);
+    border: var(--glass-border);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.location-tag {
+    background-color: rgba(160, 224, 208, 0.2);
+    color: var(--accent-color);
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.temp-display {
+    font-size: 5rem;
+    font-weight: 700;
+    color: var(--cream-color);
+    line-height: 1;
+}
+
+.condition-text {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin: 10px 0;
 }
 
 .details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 15px;
 }
 
-.detail-card {
+.detail-item {
     background: rgba(255,255,255,0.05);
-    padding: 8px;
-    border-radius: 4px;
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+    border: var(--glass-border);
+}
+
+.detail-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--cream-color);
+}
+
+.map-panel {
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    border: var(--glass-border);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.map-controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     display: flex;
-    flex-direction: column;
-}
-
-.detail-card span {
-    font-size: 10px;
-    color: var(--rialo-teal);
-    text-transform: uppercase;
-}
-
-.detail-card strong {
-    font-size: 14px;
-}
-
-.layer-controls {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 5px;
+    gap: 10px;
+    background: rgba(0,0,0,0.6);
+    padding: 10px;
+    border-radius: 30px;
+    backdrop-filter: blur(5px);
 }
 
 .layer-btn {
     background: transparent;
-    border: 1px solid var(--rialo-teal);
-    color: var(--rialo-teal);
-    font-size: 12px;
+    border: none;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: 0.3s;
 }
 
 .layer-btn.active, .layer-btn:hover {
-    background: var(--rialo-teal);
-    color: var(--rialo-black);
+    background-color: var(--accent-color);
+    color: #000;
 }
 
-.crypto-widget {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 300px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 15px;
-    z-index: 10;
+.forecast-section {
+    padding: 30px 5%;
 }
 
-.crypto-header {
+.forecast-section h2 {
+    margin-bottom: 20px;
+    color: var(--cream-color);
+}
+
+.forecast-container {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+
+.forecast-card {
+    min-width: 140px;
+    background: var(--card-bg);
+    border: var(--glass-border);
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.forecast-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,0.05);
+}
+
+.astro-section {
+    padding: 0 5% 50px 5%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.astro-card, .aqi-card {
+    background: var(--card-bg);
+    border: var(--glass-border);
+    border-radius: 20px;
+    padding: 25px;
+}
+
+.info-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     margin-bottom: 10px;
-    font-size: 12px;
-    color: var(--rialo-teal);
-    font-weight: bold;
-    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 10px;
 }
 
-.crypto-search {
-    display: flex;
-    gap: 5px;
+footer {
+    background-color: var(--secondary-bg);
+    padding: 40px 5%;
+    text-align: center;
+    border-top: var(--glass-border);
 }
 
-#crypto-input {
-    width: 80px;
-    background: var(--rialo-dark-grey);
-    border: none;
-    color: white;
-    padding: 4px;
-    border-radius: 3px;
-    font-size: 10px;
+.footer-logo {
+    height: 50px;
+    margin-bottom: 20px;
 }
 
-#crypto-search-btn {
-    padding: 4px 8px;
-    font-size: 10px;
+.credits {
+    color: var(--accent-color);
+    font-weight: 600;
+    margin: 10px 0;
 }
 
-.crypto-row {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding: 8px 0;
+footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
 }
 
-.c-change.pos { color: #00ff00; }
-.c-change.neg { color: #ff0000; }
-
-.rialo-footer {
-    height: 30px;
-    background: var(--rialo-black);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    font-size: 10px;
-    color: #666;
-    z-index: 100;
-}
-
-@media (max-width: 768px) {
-    .weather-dashboard {
-        top: auto;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        max-height: 50vh;
-        border-radius: 12px 12px 0 0;
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        height: auto;
     }
-    .crypto-widget {
-        top: 10px;
-        right: 10px;
-        bottom: auto;
-        width: calc(100% - 20px);
+    .map-panel {
+        height: 400px;
     }
-    .layer-controls {
-        grid-template-columns: repeat(3, 1fr);
+    .map-controls {
+        flex-wrap: wrap;
+    }
+    .astro-section {
+        grid-template-columns: 1fr;
+    }
+    .header-title h1 {
+        font-size: 1.1rem;
     }
 }
