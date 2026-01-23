@@ -4,114 +4,705 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rialo Weather Forecast</title>
-    <link rel="icon" href="Primary logo.jpg" type="image/jpeg">
+    <meta name="description" content="Professional Weather Forecast powered by Rialo">
+    <meta name="author" content="Vika Joestar">
+    
+    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.min.js"></script>
     <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
-    <link href="https://cdn.maptiler.com/maptiler-weather/v1.1.0/maptiler-weather.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.maptiler.com/maptiler-weather/v1.1.0/maptiler-weather.umd.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --rialo-primary: #0a0e17;
+            --rialo-accent: #3b82f6;
+            --rialo-text: #ffffff;
+            --glass-bg: rgba(16, 20, 30, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--rialo-primary);
+            color: var(--rialo-text);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- UI Layout --- */
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* --- Header / Navbar --- */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: auto;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand-logo {
+            height: 45px;
+            width: auto;
+            border-radius: 4px;
+        }
+
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #fff, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links a {
+            color: #aaa;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 500;
+            transition: color 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--rialo-accent);
+        }
+
+        /* --- Sidebar / Info Panel --- */
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            pointer-events: auto;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: transform 0.3s ease;
+        }
+
+        /* --- Search Section --- */
+        .search-box {
+            position: relative;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--rialo-accent);
+        }
+
+        .action-btn {
+            background: var(--rialo-accent);
+            border: none;
+            color: white;
+            padding: 0 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: #2563eb;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* --- Current Weather UI --- */
+        .weather-card {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .location-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .location-subtitle {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .main-temp {
+            font-size: 4.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .weather-icon {
+            width: 80px;
+            height: 80px;
+        }
+
+        .condition-text {
+            font-size: 1.2rem;
+            color: #e5e7eb;
+            text-transform: capitalize;
+            margin-bottom: 20px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* --- Forecast Section --- */
+        .forecast-section {
+            margin-top: 10px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #d1d5db;
+            border-left: 3px solid var(--rialo-accent);
+            padding-left: 10px;
+        }
+
+        .forecast-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .forecast-day {
+            font-weight: 500;
+            width: 50px;
+        }
+
+        .forecast-visual {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .forecast-visual img {
+            width: 30px;
+            height: 30px;
+        }
+
+        .forecast-temps {
+            text-align: right;
+        }
+
+        .temp-high {
+            font-weight: 600;
+        }
+
+        .temp-low {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-left: 8px;
+        }
+
+        /* --- Map Controls (Floating) --- */
+        .map-controls {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .layer-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.2rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .layer-btn:hover, .layer-btn.active {
+            background: var(--rialo-accent);
+            transform: translateX(-5px);
+        }
+
+        .tooltip {
+            position: absolute;
+            right: 55px;
+            background: rgba(0,0,0,0.8);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .layer-btn:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* --- Footer / Credits --- */
+        .footer-credit {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px 10px;
+            border-radius: 20px;
+            pointer-events: auto;
+        }
+
+        .footer-credit a {
+            color: var(--rialo-accent);
+            text-decoration: none;
+        }
+
+        /* --- Loading State --- */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0a0e17;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--rialo-accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 10px 15px;
+            }
+            
+            .brand-title {
+                font-size: 1.2rem;
+            }
+
+            .content-wrapper {
+                flex-direction: column;
+                padding: 0;
+                gap: 0;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 55vh;
+                position: absolute;
+                bottom: 0;
+                border-radius: 20px 20px 0 0;
+                z-index: 10;
+                animation: slideUp 0.4s ease-out;
+            }
+
+            .map-controls {
+                top: 70px;
+                right: 10px;
+            }
+
+            .brand-logo {
+                height: 35px;
+            }
+            
+            .nav-links {
+                display: none; /* Hide links on very small screens to save space */
+            }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
+
+    <div id="loader">
+        <div class="loader-spinner"></div>
+        <h3>Initializing Rialo Weather...</h3>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="overlay-container">
+        
         <nav class="navbar">
-            <div class="brand">
-                <img src="Primary logo.jpg" alt="Rialo Logo" class="logo">
-                <span>Rialo Weather Forecast</span>
+            <div class="brand-section">
+                <img src="./Logo + Wordmark 1.jpg" alt="Rialo Logo" class="brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <div class="brand-title">Rialo Weather</div>
             </div>
             <div class="nav-links">
                 <a href="https://www.rialo.io/" target="_blank">Rialo.io</a>
+                <a href="#">About</a>
             </div>
         </nav>
 
-        <div class="main-content">
+        <div class="content-wrapper">
             <div class="sidebar">
+                
                 <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="city-input" placeholder="Search city, zip, or country...">
-                    <button id="search-btn">Search</button>
+                    <input type="text" id="cityInput" class="search-input" placeholder="Search city, zip, or country..." onkeypress="handleEnter(event)">
+                    <button class="action-btn" onclick="searchLocation()" title="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button class="action-btn" onclick="getMyLocation()" title="Use My Location" style="background: rgba(255,255,255,0.1);">
+                        <i class="fas fa-location-arrow"></i>
+                    </button>
                 </div>
-                <button id="locate-btn"><i class="fa-solid fa-location-crosshairs"></i> Get My Location Weather</button>
 
-                <div class="weather-card" id="weather-card">
-                    <div class="card-header">
-                        <h2 id="city-name">--</h2>
-                        <p id="date-time">--</p>
-                    </div>
-                    <div class="weather-main">
-                        <img id="weather-icon" src="" alt="">
-                        <h1 id="temperature">--°c</h1>
-                        <p id="condition">--</p>
-                    </div>
-                    <div class="weather-details-grid">
-                        <div class="detail-item">
-                            <i class="fa-solid fa-droplet"></i>
-                            <div>
-                                <span class="label">Humidity</span>
-                                <span class="value" id="humidity">--%</span>
-                            </div>
+                <div id="weatherContent" style="display: none;">
+                    <div class="weather-card">
+                        <h1 class="location-title" id="locationName">--</h1>
+                        <div class="location-subtitle" id="locationDetails">--</div>
+                        
+                        <div class="main-temp">
+                            <img id="weatherIcon" src="" alt="Weather Icon" class="weather-icon">
+                            <span id="currentTemp">--</span>°
                         </div>
-                        <div class="detail-item">
-                            <i class="fa-solid fa-wind"></i>
-                            <div>
-                                <span class="label">Wind</span>
-                                <span class="value" id="wind">-- km/h</span>
+                        <div class="condition-text" id="conditionText">--</div>
+
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <div class="detail-label"><i class="fas fa-wind"></i> Wind</div>
+                                <div class="detail-value" id="windSpeed">-- km/h</div>
                             </div>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fa-solid fa-eye"></i>
-                            <div>
-                                <span class="label">Visibility</span>
-                                <span class="value" id="visibility">-- km</span>
+                            <div class="detail-item">
+                                <div class="detail-label"><i class="fas fa-tint"></i> Humidity</div>
+                                <div class="detail-value" id="humidity">--%</div>
                             </div>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fa-solid fa-gauge"></i>
-                            <div>
-                                <span class="label">Pressure</span>
-                                <span class="value" id="pressure">-- mb</span>
+                            <div class="detail-item">
+                                <div class="detail-label"><i class="fas fa-compress-arrows-alt"></i> Pressure</div>
+                                <div class="detail-value" id="pressure">-- mb</div>
                             </div>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fa-solid fa-sun"></i>
-                            <div>
-                                <span class="label">UV Index</span>
-                                <span class="value" id="uv">--</span>
-                            </div>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fa-solid fa-cloud-rain"></i>
-                            <div>
-                                <span class="label">Precip</span>
-                                <span class="value" id="precip">-- mm</span>
+                            <div class="detail-item">
+                                <div class="detail-label"><i class="fas fa-eye"></i> Visibility</div>
+                                <div class="detail-value" id="visibility">-- km</div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="forecast-section">
+                        <div class="section-title">3-Day Forecast</div>
+                        <div id="forecastContainer">
+                            </div>
+                    </div>
                 </div>
 
-                <div class="forecast-container">
-                    <h3>3-Day Forecast</h3>
-                    <div class="forecast-list" id="forecast-list">
-                        </div>
+                <div id="emptyState" style="text-align: center; padding: 40px; color: #6b7280;">
+                    <i class="fas fa-cloud-sun" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p>Enter a location or click the location button to see the forecast.</p>
                 </div>
-            </div>
 
-            <div class="map-section">
-                <div id="map"></div>
-                <div class="map-controls">
-                    <button class="layer-btn active" data-layer="precipitation">Precipitation</button>
-                    <button class="layer-btn" data-layer="temperature">Temperature</button>
-                    <button class="layer-btn" data-layer="wind">Wind</button>
-                    <button class="layer-btn" data-layer="clouds">Radar</button>
-                </div>
             </div>
         </div>
 
-        <footer>
-            <p>Developed by <strong>Vika Joestar</strong> | Powered by <a href="https://www.weatherapi.com/" target="_blank">WeatherAPI</a> & <a href="https://www.maptiler.com/" target="_blank">MapTiler</a></p>
-        </footer>
+        <div class="map-controls">
+            <div class="layer-btn active" onclick="switchLayer('precipitation')" title="Precipitation">
+                <i class="fas fa-cloud-rain"></i>
+                <span class="tooltip">Precipitation</span>
+            </div>
+            <div class="layer-btn" onclick="switchLayer('temperature')" title="Temperature">
+                <i class="fas fa-temperature-high"></i>
+                <span class="tooltip">Temperature</span>
+            </div>
+            <div class="layer-btn" onclick="switchLayer('wind')" title="Wind">
+                <i class="fas fa-wind"></i>
+                <span class="tooltip">Wind</span>
+            </div>
+            <div class="layer-btn" onclick="switchLayer('radar')" title="Radar">
+                <i class="fas fa-broadcast-tower"></i>
+                <span class="tooltip">Radar</span>
+            </div>
+        </div>
+
+        <div class="footer-credit">
+            Concept by <span style="font-weight:bold; color:#fff;">Vika Joestar</span> | Powered by <a href="https://www.rialo.io/" target="_blank">Rialo</a>
+        </div>
     </div>
 
-    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
-    <script src="https://cdn.maptiler.com/maptiler-weather/v1.1.0/maptiler-weather.umd.min.js"></script>
-    <script src="app.js"></script>
+    <script>
+        // --- Configuration ---
+        const WEATHER_API_KEY = "dea260a04f844eb9922214011262001";
+        const MAPTILER_KEY = "M3G7SJimZ3HyNUB07YAa";
+        
+        let map;
+        let activeWeatherLayer = null;
+        let weatherLayers = {};
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            // Simulate initial loading
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }, 1500);
+        });
+
+        // --- Map & Layers Setup ---
+        function initMap() {
+            maptilersdk.config.apiKey = MAPTILER_KEY;
+
+            map = new maptilersdk.Map({
+                container: 'map',
+                style: maptilersdk.MapStyle.BACKDROP.DARK, // Professional dark backdrop
+                center: [0, 20],
+                zoom: 2,
+                attributionControl: false
+            });
+
+            map.on('load', () => {
+                // Initialize Weather Layers
+                weatherLayers.precipitation = new maptilerweather.PrecipitationLayer({ opacity: 0.8 });
+                weatherLayers.temperature = new maptilerweather.TemperatureLayer({ opacity: 0.8 });
+                weatherLayers.wind = new maptilerweather.WindLayer({ opacity: 0.8 });
+                weatherLayers.radar = new maptilerweather.RadarLayer({ opacity: 0.8 });
+
+                // Set default layer
+                setWeatherLayer('precipitation');
+                
+                // Add simple terrain for 3D feel
+                map.addSource("maptiler_planet", {
+                    url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
+                    type: "vector",
+                });
+            });
+        }
+
+        function switchLayer(type) {
+            // Update UI buttons
+            document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            setWeatherLayer(type);
+        }
+
+        function setWeatherLayer(type) {
+            if (activeWeatherLayer) {
+                map.removeLayer(activeWeatherLayer.id);
+            }
+            
+            const newLayer = weatherLayers[type];
+            if (newLayer) {
+                map.addLayer(newLayer);
+                newLayer.animateByFactor(3600); // Animate
+                activeWeatherLayer = newLayer;
+            }
+        }
+
+        // --- Data Fetching Logic (WeatherAPI) ---
+        async function fetchWeatherData(query) {
+            const url = `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${query}&days=3&aqi=no&alerts=no`;
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Location not found");
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                alert("Could not fetch weather: " + error.message);
+            }
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') searchLocation();
+        }
+
+        function searchLocation() {
+            const query = document.getElementById('cityInput').value;
+            if (query) fetchWeatherData(query);
+        }
+
+        function getMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const q = `${position.coords.latitude},${position.coords.longitude}`;
+                        fetchWeatherData(q);
+                    },
+                    (error) => {
+                        alert("Geolocation access denied or failed.");
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // --- UI Updates ---
+        function updateUI(data) {
+            // Switch views
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('weatherContent').style.display = 'block';
+
+            // Current Weather
+            const current = data.current;
+            const location = data.location;
+
+            document.getElementById('locationName').innerText = location.name;
+            document.getElementById('locationDetails').innerText = `${location.region}, ${location.country}`;
+            document.getElementById('currentTemp').innerText = Math.round(current.temp_c);
+            document.getElementById('weatherIcon').src = "https:" + current.condition.icon;
+            document.getElementById('conditionText').innerText = current.condition.text;
+
+            document.getElementById('windSpeed').innerText = `${current.wind_kph} km/h`;
+            document.getElementById('humidity').innerText = `${current.humidity}%`;
+            document.getElementById('pressure').innerText = `${current.pressure_mb} mb`;
+            document.getElementById('visibility').innerText = `${current.vis_km} km`;
+
+            // Map Fly To
+            map.flyTo({
+                center: [location.lon, location.lat],
+                zoom: 10,
+                speed: 1.2
+            });
+
+            // Forecast
+            const forecastContainer = document.getElementById('forecastContainer');
+            forecastContainer.innerHTML = ''; // Clear previous
+
+            data.forecast.forecastday.forEach(day => {
+                const date = new Date(day.date);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                
+                const html = `
+                    <div class="forecast-row">
+                        <div class="forecast-day">${dayName}</div>
+                        <div class="forecast-visual">
+                            <img src="https:${day.day.condition.icon}" alt="icon">
+                            <span style="font-size: 0.8rem; color:#aaa;">${day.day.condition.text}</span>
+                        </div>
+                        <div class="forecast-temps">
+                            <span class="temp-high">${Math.round(day.day.maxtemp_c)}°</span>
+                            <span class="temp-low">${Math.round(day.day.mintemp_c)}°</span>
+                        </div>
+                    </div>
+                `;
+                forecastContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }
+    </script>
 </body>
 </html>
