@@ -4,84 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rialo Weather Forecast</title>
-    <link rel="icon" type="image/jpeg" href="Logo 3.jpg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
+    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v1.2.0/maptiler-sdk.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <header>
-        <div class="logo-container">
-            <img src="Primary logo.jpg" alt="Rialo Logo" class="header-logo">
+    <nav class="rialo-nav">
+        <div class="nav-brand">
+            <a href="https://www.rialo.io/" target="_blank">
+                <img src="assets/Logo + Wordmark 1.jpg" alt="Rialo Logo" class="nav-logo">
+            </a>
+            <span class="nav-title">Weather Forecast</span>
         </div>
-        <div class="header-title">
-            <h1>Rialo Weather Forecast</h1>
+        <div class="nav-links">
+            <a href="https://www.rialo.io/" target="_blank" class="rialo-btn">Visit Rialo.io</a>
         </div>
-        <div class="header-link">
-            <a href="https://www.rialo.io/" target="_blank" class="visit-btn">Visit Rialo.io</a>
-        </div>
-    </header>
+    </nav>
 
-    <main>
-        <section class="search-section">
+    <main class="dashboard-container">
+        <aside class="weather-sidebar">
             <div class="search-container">
-                <input type="text" id="location-input" placeholder="Search City, Zip Code, or Country...">
-                <button id="search-btn">Search</button>
-                <button id="geo-btn" title="Get My Location">
-                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Search city, zip, country...">
+                </div>
+                <button id="geoBtn" class="geo-btn" title="Get My Location Weather">
+                    <i class="fa-solid fa-location-crosshairs"></i>
                 </button>
             </div>
-        </section>
 
-        <div class="dashboard-grid">
-            <div class="weather-panel">
-                <div class="current-weather-card" id="current-weather">
-                    <div class="loader">Loading weather data...</div>
-                </div>
-                
-                <div class="details-grid" id="weather-details">
-                </div>
+            <div id="currentWeather" class="current-weather-card">
+                <div class="loader"></div>
             </div>
 
-            <div class="map-panel">
-                <div id="map"></div>
-                <div class="map-controls">
+            <div class="weather-details-grid" id="weatherDetails">
+            </div>
+
+            <div class="forecast-container">
+                <h3>7-Day Forecast</h3>
+                <div class="forecast-list" id="forecastList">
+                </div>
+            </div>
+        </aside>
+
+        <section class="map-section">
+            <div id="map"></div>
+            <div class="map-overlay-controls">
+                <div class="control-group">
                     <button class="layer-btn active" data-layer="precipitation">Precipitation</button>
                     <button class="layer-btn" data-layer="temperature">Temperature</button>
                     <button class="layer-btn" data-layer="wind">Wind</button>
-                    <button class="layer-btn" data-layer="clouds">Clouds</button>
-                    <button class="layer-btn" data-layer="pressure">Pressure</button>
+                    <button class="layer-btn" data-layer="radar">Radar</button>
                 </div>
-            </div>
-        </div>
-
-        <section class="forecast-section">
-            <h2>7-Day Forecast</h2>
-            <div class="forecast-container" id="forecast-container">
-            </div>
-        </section>
-        
-        <section class="astro-section">
-            <div class="astro-card" id="astro-data">
-            </div>
-            <div class="aqi-card" id="aqi-data">
+                <div class="map-branding">
+                    <img src="assets/Logo 1.jpg" alt="Rialo Badge">
+                </div>
             </div>
         </section>
     </main>
 
-    <footer>
+    <footer class="rialo-footer">
         <div class="footer-content">
-            <img src="Logo + Wordmark 2.jpg" alt="Rialo Footer Logo" class="footer-logo">
-            <p>Rialo Weather Forecast © 2026</p>
-            <p class="credits">Credits: Vika Joestar</p>
-            <p>Powered by <a href="https://www.weatherapi.com/" title="Free Weather API">WeatherAPI.com</a> & <a href="https://www.maptiler.com/">MapTiler</a></p>
+            <div class="footer-brand">
+                <img src="assets/Logo + Wordmark 2.jpg" alt="Rialo Footer Logo">
+            </div>
+            <div class="credits">
+                <p>Designed & Developed by <span class="highlight">Vika Joestar</span></p>
+                <p>&copy; 2026 Rialo. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 
-    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.min.js"></script>
+    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.2.0/maptiler-sdk.umd.js"></script>
     <script src="https://cdn.maptiler.com/maptiler-weather/v1.1.0/maptiler-weather.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
